@@ -49,10 +49,6 @@ if isempty(plugin)
 end
 
 % sort plugins by download score
-[~,scoreOrder] = sort([ plugin.downloads ], 2, 'descend');
-plugin = plugin(scoreOrder);
-
-% sort plugins by download score
 [~, scoreOrder] = sort([ plugin.downloads ], 2, 'descend');
 plugin = plugin(scoreOrder);
         
