@@ -131,7 +131,7 @@ function [plugin,eeglabVersionStatus] = plugin_getweb(type, pluginOri, varargin)
             end
         end
     end
-    plugin = rmfield(plugin, renameField{iField, 1});
+    plugin = rmfield(plugin, renameField(:, 1)');
     % handle the special case of EEGLAB version
     indEEGLAB = cellfun(@(x)isequal(x, 'eeglab'), lower( { plugin.name } ));
     eeglabVersionStatus = plugin(indEEGLAB);
