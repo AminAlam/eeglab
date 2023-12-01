@@ -92,7 +92,7 @@ function [plugin,eeglabVersionStatus] = plugin_getweb(type, pluginOri, varargin)
                 return
             end
             plugin(iRow).(renameField{iField, 2}) = plugin(iRow).(renameField{iField, 1});
-            rmfield(plugin, renameField{iField, 1});
+            plugin(iRow).(renameField{iField, 1}) = [];
         end
         
         % decode tags
@@ -131,6 +131,7 @@ function [plugin,eeglabVersionStatus] = plugin_getweb(type, pluginOri, varargin)
             end
         end
     end
+    plugin = rmfield(plugin, renameField{iField, 1});
     % handle the special case of EEGLAB version
     indEEGLAB = cellfun(@(x)isequal(x, 'eeglab'), lower( { plugin.name } ));
     eeglabVersionStatus = plugin(indEEGLAB);
