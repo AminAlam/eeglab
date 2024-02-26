@@ -119,11 +119,11 @@ end
 CURRENTSET = OLDSET;
 com = sprintf('[ALLEEG EEG CURRENTSET] = pop_newset(ALLEEG, EEG, %s); ', vararg2str( { OLDSET varargin{:} } ));
 
-[g varargin] = finputcheck(varargin, { ...
-                    'gui'           'string'     { 'on';'off' }   'on'; % []=none; can be multiple numbers
-                    'guistring'     'string'     { }              'What do you want to do with the new dataset?';
-                    'retrieve'      'integer'    []               []; % []=none; can be multiple numbers
-                    'study'         'integer'    [0 1]            0;  % important because change behavior for modified datasets
+[g, varargin] = finputcheck(varargin, { ...
+    'gui',           'string',   { 'on'; 'off' },  'on';
+    'guistring',     'string',   { },              'What do you want to do with the new dataset?';
+    'retrieve'       'integer'  []                 [];
+    'study'          'integer'  [0 1]              0;
                     }, 'pop_newset', 'ignore');
 if ischar(g), error(g); end
 eeglab_options;
@@ -333,7 +333,8 @@ elseif length(varargin) == 0 && length(EEG) == 1 && strcmpi(g.gui, 'on') % if se
     if isempty(cb_saveold)
         uilist(end-3:end) = [];
         geometry(end)     = [];
-    end;        
+    end
+    
     % update GUI for selecting multiple datasets
     % ------------------------------------------
     if length(g.retrieve) > 1 || ( g.study && ~isempty(g.retrieve)) % selecting several datasets or a study is present

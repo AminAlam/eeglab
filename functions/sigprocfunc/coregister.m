@@ -46,7 +46,10 @@
 %   'warpmethod' - ['rigidbody'|'globalrescale'|'traditional'|'nonlin1'|
 %                 'nonlin2'|'nonlin3'|'nonlin4'|'nonlin5']
 %                 'traditional' calls the dipfit2.* function TRADITIONALDIPFIT
-%                 all others are enacted by ELECTRODENORMALIZE
+%                 all others are enacted by FT_ELECTRODEREALIGN
+%                 If you want to preserve the scale between x, y and z, use
+%                 'globalrescale'. If you want to warp the dimensions to
+%                 best match the target coordinates, use 'traditional'
 %                 {default: 'traditional}
 %   'transform' - [real array] homogeneous transformation matrix (>>help 
 %                 electrodenormalize) or a 1x9 matrix containing traditional 
@@ -70,18 +73,6 @@
 %                 'warp' mode co-registration,  and making manual
 %                 adjustments. Default if 'on'. 'off' does not pop up any 
 %                 window and 'show' does not allow to change coregistration.
-%
-% Optional 'keywords' for ALIGN MODE:
-%    'alignfid' - {cell array of strings} = labels of (fiducial) channels to use 
-%                 as common landmarks for aligning the new channel locations to 
-%                 the reference locations. These labels must be in both channel 
-%                 locations (EEG.chanlocs) and/or EEG.chaninfo structures (see 
-%                 'chaninfo1' and 'chaninfo2' below). Will then apply a linear 
-%                 transform including translation, rotation, and/or uniform 
-%                 scaling so as to best match the two sets of landmarks. 
-%                 See 'autoscale' below.
-%   'autoscale' - ['on'|'off'] autoscale electrode radius when aligning 
-%                 fiducials. {default: 'on'}
 %
 % Optional 'keywords' for WARP MODE:
 %    'warp'     - {cell array of strings} channel labels used for non-linear 
@@ -119,10 +110,9 @@
 %   [newlocs transform] = coregister(EEG.chanlocs, template_models(2).chanfile, ...
 %        'mesh', template_models(2).hdmfile);
 %
-% See also: TRADITIONALDIPFIT, HEADPLOT, PLOTMESH, ELECTRODENORMALIZE. 
+% See also: TRADITIONALDIPFIT, HEADPLOT, PLOTMESH, FT_ELECTRODEREALIGN
 %
-% Note: Calls Robert Oostenveld's FieldTrip coregistration functions for
-%       automatic coregistration.
+% Note: Calls FieldTrip coregistration functions for automatic coregistration.
 %
 % Author: Arnaud Delorme, SCCN/INC/UCSD, 2005-06
 
@@ -220,10 +210,10 @@ defaultmesh = 'standard_vol.mat';
 g = finputcheck(varargin, { 'alignfid'   'cell'  {}      {};
                             'warp'       { 'string','cell' }  { {} {} }      {};
                             'warpmethod' 'string'  {'rigidbody', 'globalrescale', 'traditional', 'nonlin1', 'nonlin2', 'nonlin3', 'nonlin4', 'nonlin5' 'realignfiducial'} 'traditional';
-                            'chaninfo1'  'struct' {}    struct('no', {}); % default empty structure
-                            'chaninfo2'  'struct' {}     struct('no', {}); 
+                            'chaninfo1'  'struct' {}    struct('no', {});
+                            'chaninfo2'  'struct' {}    struct('no', {}); 
                             'transform'  'real'   []      [];
-                            'manual'     'string' { 'on','off','show' } 'on'; % -> pop up window
+                            'manual'     'string' { 'on','off','show' } 'on';
                             'showlabels1'  'string' { 'on','off' } 'off';
                             'showlabels2'  'string' { 'on','off' } 'off';
                             'title'        'string' { } '';
@@ -450,7 +440,7 @@ if strcmpi(g.manual, 'on')
     h = uicontrol( opt{:}, [0.7  .1  .1  .05], 'tag', 'resizex', 'callback', cbresizex, 'style', 'edit', 'string', '');
     h = uicontrol( opt{:}, [0.7  .05 .1  .05], 'tag', 'resizey', 'callback', cbresizey, 'style', 'edit', 'string', '' );
     h = uicontrol( opt{:}, [0.7  0   .1  .05], 'tag', 'resizez', 'callback', cbresizez, 'style', 'edit', 'string', '');
-    h = uicontrol( opt{:}, [0.8  .1  .2  .05], 'style', 'pushbutton', 'string', 'Align fiducials', 'callback', cb_fid);
+    h = uicontrol( opt{:}, [0.8  .1  .2  .05], 'style', 'pushbutton', 'string', 'Align montages', 'callback', cb_fid);
     h = uicontrol( opt{:}, [0.8  .05 .2  .05], 'style', 'pushbutton', 'string', 'Warp montage', 'callback', cb_warp );
     h = uicontrol( opt{:}, [0.8  0   .1  .05], 'style', 'pushbutton', 'string', 'Cancel', 'callback', 'close(gcbf);' );
     h = uicontrol( opt{:}, [0.9  0   .1  .05], 'style', 'pushbutton', 'string', 'Ok', 'tag', 'ok', 'callback', cb_ok);
@@ -842,7 +832,8 @@ function s = plotnose(transf, col)
         col = [1 0.75 0.65 ];
     end
         
-    x=[ % cube
+    % cube
+    x=[ 
      NaN -1 1 NaN
       -1 -1 1 1
       -1 -1 1 1
@@ -851,7 +842,7 @@ function s = plotnose(transf, col)
      NaN NaN NaN NaN
      ];
     
-    y=[ % cube
+    y=[ 
      NaN -1 -1   NaN
       -1 -1 -1   -1
        1  1  1    1
@@ -860,7 +851,7 @@ function s = plotnose(transf, col)
      NaN NaN NaN NaN
      ];
     
-    z=[ % cube
+    z=[ 
      NaN 0 0 NaN
        0 1 1 0
        0 1 1 0
@@ -869,7 +860,8 @@ function s = plotnose(transf, col)
      NaN NaN NaN NaN
      ];
 
-    x=[ % noze
+    % noze
+    x=[ 
      NaN -1  1 NaN
       -1  0  0 1
      -.3  0  0 .3
@@ -878,7 +870,7 @@ function s = plotnose(transf, col)
      NaN NaN NaN NaN
      ];
     
-    y=[ % noze
+    y=[ 
      NaN -1 -1   NaN
       -1 -1 -1   -1
        1 -1 -1    1
@@ -887,7 +879,7 @@ function s = plotnose(transf, col)
      NaN NaN NaN NaN
      ];
     
-    z=[ % noze
+    z=[ 
      NaN 0 0 NaN
        0 1 1 0
        0 1 1 0

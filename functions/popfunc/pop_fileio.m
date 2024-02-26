@@ -74,12 +74,16 @@ if nargin < 1
     if strcmpi(ButtonName, 'file')
         [filename, filepath] = uigetfile('*.*', 'Choose a file or header file -- pop_fileio()'); 
         drawnow;
-        if filename(1) == 0 return; end
+        if filename(1) == 0
+            return;
+        end
         filename = fullfile(filepath, filename);
     else
-        filename = uigetdir('*.*', 'Choose a folder -- pop_fileio()'); 
+        filename = uigetdir('*.*', 'Choose a folder -- pop_fileio()');
         drawnow;
-        if filename(1) == 0 return; end
+        if filename(1) == 0
+            return;
+        end
     end
     
     % open file to get infos
@@ -125,7 +129,9 @@ if nargin < 1
     end
 
     [result,~,~,restag] = inputgui( geom, uilist, 'pophelp(''pop_fileio'')', 'Load data using FILE-IO -- pop_fileio()');
-    if isempty(result) return; end
+    if isempty(result) 
+        return; 
+    end
     if ~isfield(restag, 'trials')
         restag.trials = '';
     end
@@ -215,7 +221,11 @@ end
 % convert to seconds for sread
 % ----------------------------
 if isfield(dat, 'hdr') && ~isfield(dat, 'Fs')
-    if isfield(dat, 'fsample') EEG.srate = dat.fsample; else EEG.srate = dat.hdr.Fs; end
+    if isfield(dat, 'fsample')
+        EEG.srate = dat.fsample;
+    else
+        EEG.srate = dat.hdr.Fs;
+    end
     EEG.nbchan          = dat.hdr.nChans;
     EEG.data            = alldata;
     if iscell(EEG.data)
@@ -330,7 +340,7 @@ end
 
 % import fiducial in associated coordsystem file if present
 % ---------------------------------------------------------
-if ~isempty(fileNameNoExt)
+if ~isempty(fileNameNoExt) && length(fileNameNoExt) > 3
     coordSystemFile = dir(fullfile(filePath, [ fileNameNoExt(1:4) '*coordsystem.json' ]));
     if length(coordSystemFile) == 1
         coordSystemFileName = fullfile(coordSystemFile(1).folder, coordSystemFile(1).name);
@@ -350,7 +360,18 @@ end
 disp('Reading events...');
 if isempty(event)
     try
-        event = ft_read_event(filename, dataopts{:});
+        if isequal(lower(filext), '.ncs') % special for neuralinx files
+            eventfile = [ strrep(fileNameNoExt, 'Pz', 'Events') '.nev'];
+            if exist(eventfile, 'file')
+                event = ft_read_event(eventfile, dataopts{:});
+                for i=1:length(event)
+                  % the first sample in the datafile is 1
+                  event(i).sample = (event(i).timestamp-double(dat.FirstTimeStamp))./dat.TimeStampPerSample + 1;
+                end            
+            end
+        else
+            event = ft_read_event(filename, dataopts{:});
+        end
     catch
         disp(lasterr); 
         event = []; 

@@ -76,6 +76,9 @@ EEG = eeg_emptyset;
 
 % convert to seconds for sread
 % ----------------------------
+if ~isempty(channels)
+    dat.InChanSelect = channels;
+end
 if ~isfield(dat, 'InChanSelect') && max(dat.InChanSelect) > size(DAT,1)
     dat.InChanSelect = [1:size(DAT,1)];
 end
@@ -211,7 +214,12 @@ if importevent
                 EEG.event(i).epoch = ceil(EEG.event(i).latency/EEG.pnts);
             end
         end
-        EEG = eeg_checkset(EEG, 'eventconsistency');
+        if length(EEG.event) > 100000
+            disp('More than 100000 events detected. This is too much for EEGLAB to handle (and likely an issue with importing the data), removing event structure')
+            EEG.event = [];
+        else
+            EEG = eeg_checkset(EEG, 'eventconsistency');
+        end
     end
 
     if ~isempty(dat.EVENT.POS)    

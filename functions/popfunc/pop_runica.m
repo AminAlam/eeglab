@@ -109,10 +109,10 @@ end
 % find available algorithms
 % -------------------------
 allalgs(1).name = 'runica';
-allalgs(1).description = 'Infomax runica.m (default)';
-allalgs(1).options     = '''extended'', 1';
+allalgs(1).description = 'Extended Infomax (runica.m; default)';
+allalgs(1).options     = '''extended'', 1, ''rndreset'', ''yes''';
 allalgs(end+1).name = 'runica';
-allalgs(end).description = 'Infomax runica.m conservative (slow)';
+allalgs(end).description = 'Robust Extended Infomax (runica.m; slow)';
 allalgs(end).options     = '''extended'', 1, ''lrate'', 1e-5, ''maxstep'', 2000';
 allalgs(end).help        = 'See this <a href="https://sccn.ucsd.edu/wiki/Makoto%27s_useful_EEGLAB_code#How_to_obtain_practically_reproducible_ICA_results_.2809.2F26.2F2022_added.29">reference</a> for ICA conservative parameters ';
 allalgs(end+1).name = 'amica';
@@ -269,7 +269,9 @@ if nargin < 2 || selectamica
     result       = inputgui( 'geometry', geometry, 'geomvert', geomvert, 'uilist', promptstr, ...
                              'helpcom', 'pophelp(''pop_runica'')', ...
                              'title', 'Run ICA decomposition -- pop_runica()', 'userdata', { alllabels alltypes allalgs } );
-    if length(result) == 0 return; end      
+    if isempty(result)
+        return;
+    end
     options = { 'icatype' allalgs(result{1}).name 'dataset' [1:length(ALLEEG)] 'options' eval( [ '{' result{2} '}' ]) 'reorder' fastif(result{3}, 'on', 'off') };
     if ~isempty(result{4})
         if ~isempty(str2num(result{4})), options = { options{:} 'chanind' str2num(result{4}) };
